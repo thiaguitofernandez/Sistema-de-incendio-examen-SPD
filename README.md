@@ -1,72 +1,54 @@
-# Sistema-de-incendio-examen-SPD# SPD-Examen-Montacargas
+# SPD-Examen-Montacargas
 
 ## Examen: Montacargas
 ![Tinkercad](./imagenes/arduino.png)
 ![Diagrama](./imagenes/arduino_plano_esquematico.jpg)
 
 ## objetivo del proyecto
-El objetivo de este proyecto es realizar el "menu" interactivo de un montaargas el cual debe subir pisos y bajarlos uno a la vez.
-## Funcionamiento.
-para su funcionamiento se divide en diferentes partes las cuales son las siguientes:
-* Configuracion y definicion de variables.
-* Loop y funciones pincipales.
-* Entrada de datos.
-* Funciones para apagado y prendido de leds.
+El objetivo de este proyecto es realizarun sistema que muestre la estacion actual y la temperatura hasta que se determina que hay un incendio y se activa el sistema antiincendio.
+
 
 ### Configuracion inicial y definicion de variables.
 Aqui se establecen los puertos utilizados asignadoles una denominacion, se inicializan las variables y se establece la configuacion inicial indicando la modalidad de cada puerto como el estado de dichos puertos
-* Establecimiento de nombre de los puertos.
 
-Los puertos establecidos fueron de los puertos digitales 13 al puerto 5 y tambien se convitieron los puertos analogicos A0 a A2 en puertos digitales yendo de 14 a 16 en el mismo orden de antes.
-Y estos fueron para los siguientes 
 ~~~~
-#define BOTON_PARAR 16
-#define BOTON_SUBIR 15
-#define BOTON_BAJAR 14
-#define	LUZ_MOVIENDO 13
-#define	LUZ_PARADO 12
-#define	ARRIBA_DERECHA 11
-#define	ARRIBA 10
-#define	ARRIBA_IZQUIERDA 9
-#define	CENTRO 8
-#define	ABAJO_IZQUIERDA 7
-#define	ABAJO 6
-#define	ABAJO_DERECHA 5
-~~~~
-* Inicializacion de variables.
+#include <LiquidCrystal.h>
+#include <IRremote.h>
+#include <Servo.h>
 
-Las variables son 4:
-2 siendo banderas(**bandera_emergencia** y **bandera_emegencia_moviendo**) que se utilizan para habilitar y desabilitar el codigo por lo que poseen valores de HIGH y LOW.
-Y las otras siendo piso una variable de tipo **int** que tiene valores de 0 a 9 y contador una variable de tipo **long** para tener el rango utilizable de la funcion millis.
-~~~~
-int bandera_emergencia = LOW;
-int bandera_emergencia_moviendo = LOW;
-int piso = 0;
-long contador = 0;
-~~~~
-* Configuracion Inicial.
-
-Aqui se confugura los puertos para indicar su funcion, ya sea de salidad como de entrada, se inicia el monitor serial con una velocidad de 9600 y se configura el estado inicial que los puerto deberian de tener.
-~~~~
+/*	definicion de puertos	*/
+#define led 8
+#define led_servo_mov 13
+#define sensorIR 9
+/*	definicion de valor de tecla IR	*/
+#define Tecla_1 0xEF10BF00
+/*	inicializacion de variables	*/
+int temperatura = 0;
+int pos = 0;
+int rojo = 0;
+int verde = 0;
+int azul = 0;
+/*	creacion de objetos	*/
+LiquidCrystal lcd_1(12, 11, 5, 4, 3, 2);
+Servo servo_6;
+/*		*/
 void setup()
 {
-  pinMode(BOTON_PARAR, INPUT);
-  pinMode(BOTON_SUBIR, INPUT);
-  pinMode(BOTON_BAJAR, INPUT);
-  pinMode(LUZ_MOVIENDO, OUTPUT);
-  pinMode(LUZ_PARADO, OUTPUT);
-  pinMode(ABAJO_DERECHA, OUTPUT);
-  pinMode(ABAJO, OUTPUT);
-  pinMode(ABAJO_IZQUIERDA, OUTPUT);
-  pinMode(CENTRO, OUTPUT);
-  pinMode(ARRIBA_IZQUIERDA, OUTPUT);
-  pinMode(ARRIBA, OUTPUT);
-  pinMode(ARRIBA_DERECHA, OUTPUT);
-  prende_numero_cero();
-  prende_led(LUZ_PARADO);
-  Serial.begin(9600);
-  Serial.println("Usted se encuentra en el piso: 0");
+	/*	configuracion de puertos	*/
+	pinMode(led, OUTPUT);
+	pinMode(led_servo_mov, OUTPUT);
+  	/*	configuracion inicial lcd	*/
+  	lcd_1.begin(16, 2);
+  	lcd_1.print("Primavera");
+    lcd_1.setCursor(0, 1);
+  	lcd_1.print("temp");
+	/*	habilitacion del senso IR	*/
+    IrReceiver.begin(sensorIR, DISABLE_LED_FEEDBACK);
+  	/*	congiguracion de objeto servo	*/
+	servo_6.attach(6, 500, 2500);
+  	servo_6.write(pos);
 }
+
 ~~~~
 
 ### Loop y funciones pincipales.
@@ -74,26 +56,28 @@ Dentro del loop se encuenta el codigo que se ejecuta continuamente y luego las f
 
 * **Loop**
 ~~~~
-void loop()
-{
-    bandera_emergencia = emergencia(bandera_emergencia);
+void loop(){
+  	/*	lectura de tempeatua y procesamiento de valor	*/
+    temperatura = analogRead(A0);
+    temperatura = map(temperatura,20,358,-40,125);
+  	/*	determinar y mostrar estacion segun temperatura	*/
+  	if(temperatura < 43 && digitalRead(led) == LOW){
+      	
+    	determinar_estacion();
+	}
+  	/*	decodificacion de señales con sus ordenes	*/
+  	control_hacer();
+  	/*	sistema de incendio	*/
+  	incendio();
+ 	
+  	delay(1000);
 
-    if (bandera_emergencia == LOW){
-        montacargas();
-    }
 }
 ~~~~
-El loop consiste de la asignacion de la varaible **bandera_emergencia** atravez de la funcion emergencia la varaible consigue un valo de HIGH o LOW.
-Luego un if evalua esa misma varaible para ver si esta en LOW para poder acceder a la funcion montacargas.
 
 #### funciones principales.
 
-Dentro de las funciones pincipales se encuentran 2 funciones que llevan parte del parado de emergencia del montacargas, luego se encuentra la funcion **montacargas** la cual se encarga de gestionar las funciones necesarias para que este suba y baje reportando el piso en el que esta.
 
-* Funciones para el paro de emergencia.
-Las funciones para el paro de emergencia son:
-* **emergencia**
-* **movimiento**
 ------
 
 * **emergencia:**
