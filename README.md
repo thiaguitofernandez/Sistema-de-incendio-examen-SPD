@@ -164,4 +164,4 @@ void mensaje_cerrando(){
 
 
 ## Link al proyecto.
-- [proyecto](https://www.tinkercad.com/things/399n3WSI8cfp)
+- [proyecto](https://www.tinkercad.com/things/399n3WSI8cf?sharecode=cKYD69gVAuYqY1NP2EkLe8Y94M03s2RZ9MUkw7xP8WQ)
