@@ -1,6 +1,6 @@
-# SPD-Examen-Montacargas
+# SPD-Sistema-anti-incendios
 
-## Examen: Montacargas
+## Examen: antiincendios
 ![Tinkercad](./imagenes/arduino.png)
 ![Diagrama](./imagenes/arduino_plano_esquematico.jpg)
 
